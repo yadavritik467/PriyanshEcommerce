@@ -1,4 +1,65 @@
+import passport from "passport";
 import { User } from "../Model/User.js";
+import { Strategy as GoogleStrategy } from 'passport-google-oauth20'
+
+export const connectPassport = (res) => {
+    passport.use(new GoogleStrategy({
+        clientID: process.env.CLIENT_ID,
+        clientSecret: process.env.CLIENT_SECRET,
+        callbackURL: "http://localhost:4500/auth/google/callback",
+        userProfileURL: 'https://www.googleapis.com/oauth2/v3/userinfo',
+        scope: ['profile', 'email',
+        //  'https://www.googleapis.com/auth/user.phonenumbers.read', 
+        // 'https://www.googleapis.com/auth/user.addresses.read'
+    ],
+        passReqToCallback: true
+    },
+        async (req, res, accessToken, refreshToken, profile, done) => {
+
+
+            // console.log(profile);
+            const existingUser = await User.findOne({
+                googleId: profile.id,
+            })
+
+            if (existingUser) {
+                // User already exists, return the user
+
+                done(null, existingUser);
+            } else {
+
+                // Create a new user
+                const user = await User.create({
+                    googleId: profile.id,
+                    name: profile.displayName,
+                    email: profile.emails[0].value,
+                    secret: accessToken,
+                    number: profile.phone_number,
+                    address: profile.address,
+                });
+
+                console.log(user)
+                done(null, user,);
+
+            }
+
+
+        }
+    )
+    )
+   try {
+    passport.serializeUser(function (user, done) {
+        done(null, user.id);
+    });
+
+    passport.deserializeUser(async (user, id, done) => {
+        const newUser = await User.findById(id)
+        done(null, newUser.id);
+    })
+   } catch (error) {
+     console.error(error.message);
+   }
+}
 
 export const registerUser = async(req,res) =>{
     try {
@@ -73,7 +134,9 @@ export const loginUser = async(req,res) =>{
                 })
              } else{
                 const token = await user.generateToken();
-                return res.status(200).json({
+                return res.status(200)
+                .cookie("token", token, { expires: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000), httpOnly: true })
+                .json({
                     success: true,
                     message:"login succesfully",
                     user,
@@ -89,10 +152,105 @@ export const loginUser = async(req,res) =>{
     }
 }
 
+export const logOut = async (req, res) => {
+    try {
+        res.status(200).cookie("token", null, { expires: new Date(Date.now()), httpOnly: true }).json({ success: true, message: "logout successfully" })
+    } catch (error) {
+        res.status(500).json({ message: error.message, })
+    }
+}
+
+export const updatePassword = async (req,res) =>{
+    try {
+        const user = await User.findById(req.user._id);
+        const {oldPassword,newPassword} = req.body;
+        if(!oldPassword || !newPassword){
+            return res.status(400).json({
+                success: false,
+                message:"please provide old password and new password"
+            })
+        }
+
+        const isMatch = await user.matchPassword(oldPassword);
+
+        if(!isMatch){
+            return res.status(400).json({
+                success: false,
+                message:"Incorrect old password"
+            })
+        }
+
+        user.password = newPassword;
+
+        await user.save();
+
+        res.status(200).json({
+            success: true,
+            message: "password updated"
+        })
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        })
+    }
+}
+
+export const updateProfile = async(req,res) =>{
+    try {
+        const user =  await User.findById(req.user._id);
+        const {name,number,email} = req.body;
+        if(name){
+            user.name = name;
+        }
+        if(number){
+            user.number = number;
+        }
+        if(email){
+            user.email = email;
+        }
+        await user.save();
+        res.status(200).json({
+            success: true,
+            message:"profile updated"
+        })
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        })
+    }
+}
+
+export const deleteUser = async(req,res) =>{
+    try {
+        await User.findByIdAndDelete(req.params.id)
+        return res.status(200).json({
+            success: true,
+            message: 'User deleted successfully'
+        })
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message:error.message
+        })
+    }
+}
 
 export const  getAllUsers = async(req,res)=>{
     try {
-        
+        const users = await User.find({})
+        if(!users){
+            return res.status(404).json({
+                success: false,
+                message: 'No users found',
+            })
+        }else{
+            return res.status(200).json({
+                success: true,
+                users,
+            })    
+        }
     } catch (error) {
         res.status(500).json({
             success: false,

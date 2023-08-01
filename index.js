@@ -3,19 +3,49 @@ import cors from "cors";
 import {config} from "dotenv"
 import mongoose from "mongoose";
 import cookie from "cookie-parser"
+import cloudinary from "cloudinary";
+import session from "express-session"
+import fileUpload from "express-fileupload";
+
 
 // Routers
 
 import ProductRouter from "./Routes/Product.js"
 import UserRouter from "./Routes/User.js"
+import ContentRouter_1 from "./Routes/Content_1.js"
+import ContentRouter_2 from "./Routes/Content_2.js"
+import CaroRouter from "./Routes/Carousel.js"
+import { connectPassport } from "./Controller/User.js";
+import passport from "passport";
 
 
 
 config({path:"./config/config.env"});
 const app = express();
-app.use(express.json());
+app.use(express.json({limit:"50mb"}));
+app.use(express.urlencoded({limit:"50mb",extended:true}));
 app.use(cookie());
 app.use(cors())
+app.use(
+    session({
+      secret: 'your-secret-key',
+      resave: true,
+      saveUninitialized: true,
+    })
+  );
+// Initialize Passport.js
+app.use(passport.initialize());
+app.use(passport.session());
+// app.use('/',express.static('./Frontend/build/'))
+
+connectPassport()
+
+cloudinary.config({
+    cloud_name:process.env.CLOUD_NAME,
+    api_key:process.env.CLOUD_API_KEY,
+    api_secret:process.env.CLOUD_API_KEY_SECRET,
+    url:process.env.CLOUD_URL,
+})
 
 // connection to Db
 
@@ -35,10 +65,17 @@ MongoDB();
 
 const Port = process.env.Port;
 
+
+
+
 // importing routes
 
 app.use("/api/v1",ProductRouter)
 app.use("/api/v1",UserRouter)
+app.use("/api/v1",ContentRouter_1)
+app.use("/api/v1",ContentRouter_2)
+app.use("/api/v1",CaroRouter)
+// app.use("/auth",UserRouter)
 
 app.get("/",(req,res)=>{
     res.send("working");
