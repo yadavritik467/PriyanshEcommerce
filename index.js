@@ -5,11 +5,8 @@ import mongoose from "mongoose";
 import cookie from "cookie-parser"
 import cloudinary from "cloudinary";
 
-<<<<<<< HEAD
 
-=======
 import fileUpload from "express-fileupload";
->>>>>>> a2db3b1f2f06d0f62d136832e7bcf08b3302c327
 
 
 // Routers
@@ -19,11 +16,9 @@ import UserRouter from "./Routes/User.js"
 import ContentRouter_1 from "./Routes/Content_1.js"
 import ContentRouter_2 from "./Routes/Content_2.js"
 import CaroRouter from "./Routes/Carousel.js"
-<<<<<<< HEAD
-import OrderRouter from "./Routes/Order.js"
-=======
 
->>>>>>> a2db3b1f2f06d0f62d136832e7bcf08b3302c327
+import OrderRouter from "./Routes/Order.js"
+
 
 
 
@@ -34,11 +29,10 @@ app.use(express.json({limit:"50mb"}));
 app.use(express.urlencoded({limit:"50mb",extended:true}));
 app.use(cookie());
 app.use(cors())
-<<<<<<< HEAD
-=======
+
 
 // app.use('/',express.static('./Frontend/build/'))
->>>>>>> a2db3b1f2f06d0f62d136832e7bcf08b3302c327
+
 
 
 

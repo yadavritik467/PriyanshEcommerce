@@ -1,8 +1,7 @@
-import passport from "passport";
+// import passport from "passport";
 import { User } from "../Model/User.js";
-<<<<<<< HEAD
 import crypto from "crypto"
-import { Strategy as GoogleStrategy } from 'passport-google-oauth20'
+// import { Strategy as GoogleStrategy } from 'passport-google-oauth20'
 import { sendPasswordResetEmail } from "../utils/sendPassword.js";
 
 // export const connectPassport = (res) => {
@@ -63,11 +62,7 @@ import { sendPasswordResetEmail } from "../utils/sendPassword.js";
 //      console.error(error.message);
 //    }
 // }
-=======
 
-
-
->>>>>>> a2db3b1f2f06d0f62d136832e7bcf08b3302c327
 
 export const registerUser = async(req,res) =>{
     try {
