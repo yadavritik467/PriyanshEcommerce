@@ -1,23 +1,57 @@
 import mongoose from "mongoose";
 
 const orderSchema =  new mongoose.Schema({
-    name:{
+    userID:{
+        type:mongoose.Schema.Types.ObjectId,
+        ref:"user"
+    },
+    user:{
+        type:Array,
+    },
+    productID:{
+        type:Array,
+    },
+    size:{
         type:String,
     },
-    number:{
+    totalPrice:{
+        type:Number,
+        
+    },
+    deliveryCharge:{
         type:Number,
     },
-    email:{
-        type:String,
-    },
-    address:{
-        type:String,
-    },
-    ProductName:{
-        type:String,
-    },
-    productPrice:{
+    total:{
         type:Number,
     },
+    orderStatus:{
+        type:String,
+        default:"processing",
+    },
+    previousOrderStatus:{
+        type:String,
+        
+    },
+    paymentVerify:{
+        public_id:String,
+        url:String,
+    },
+    paymentMethod:{
+        type:String,
+        default:"Online",
+    },
+    createdAt: {
+        type: Date,
+        default: Date.now,
+      },
+      updatedAt: {
+        type: Date,
+        default: Date.now,
+      },
+      paidAt: {
+        type: Date,
+      },
    
 })
+
+export const Order = mongoose.model('Order',orderSchema);

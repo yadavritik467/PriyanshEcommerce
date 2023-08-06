@@ -53,7 +53,8 @@ export const getAllContent_1 = async(req,res) =>{
 
 export const contentDelete_1 = async(req,res) =>{
     try {
-        await Content_1.findByIdAndDelete(req.params.id);
+       const content_1 = await Content_1.findByIdAndDelete(req.params.id);
+       await cloudinary.v2.uploader.destroy(content_1.image.public_id)
        return  res.status(200).json({
             success: true,
             message:"content deleted"
@@ -113,7 +114,8 @@ export const getAllContent_2 = async(req,res) =>{
 
 export const contentDelete_2 = async(req,res) =>{
     try {
-        await Content_2.findByIdAndDelete(req.params.id);
+       const content_2 = await Content_2.findByIdAndDelete(req.params.id);
+        await cloudinary.v2.uploader.destroy(content_2.image.public_id)
        return  res.status(200).json({
             success: true,
             message:"content deleted"
@@ -173,7 +175,8 @@ export const getAllCarousel = async(req,res) =>{
 
 export const carouselDelete = async(req,res) =>{
     try {
-        await Carousel.findByIdAndDelete(req.params.id);
+      const caro =  await Carousel.findByIdAndDelete(req.params.id);
+        await cloudinary.v2.uploader.destroy(caro.image.public_id)
        return  res.status(200).json({
             success: true,
             message:"content deleted"

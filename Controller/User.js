@@ -1,65 +1,67 @@
 import passport from "passport";
 import { User } from "../Model/User.js";
+import crypto from "crypto"
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20'
+import { sendPasswordResetEmail } from "../utils/sendPassword.js";
 
-export const connectPassport = (res) => {
-    passport.use(new GoogleStrategy({
-        clientID: process.env.CLIENT_ID,
-        clientSecret: process.env.CLIENT_SECRET,
-        callbackURL: "http://localhost:4500/auth/google/callback",
-        userProfileURL: 'https://www.googleapis.com/oauth2/v3/userinfo',
-        scope: ['profile', 'email',
-        //  'https://www.googleapis.com/auth/user.phonenumbers.read', 
-        // 'https://www.googleapis.com/auth/user.addresses.read'
-    ],
-        passReqToCallback: true
-    },
-        async (req, res, accessToken, refreshToken, profile, done) => {
-
-
-            // console.log(profile);
-            const existingUser = await User.findOne({
-                googleId: profile.id,
-            })
-
-            if (existingUser) {
-                // User already exists, return the user
-
-                done(null, existingUser);
-            } else {
-
-                // Create a new user
-                const user = await User.create({
-                    googleId: profile.id,
-                    name: profile.displayName,
-                    email: profile.emails[0].value,
-                    secret: accessToken,
-                    number: profile.phone_number,
-                    address: profile.address,
-                });
-
-                console.log(user)
-                done(null, user,);
-
-            }
+// export const connectPassport = (res) => {
+//     passport.use(new GoogleStrategy({
+//         clientID: process.env.CLIENT_ID,
+//         clientSecret: process.env.CLIENT_SECRET,
+//         callbackURL: "http://localhost:4500/auth/google/callback",
+//         userProfileURL: 'https://www.googleapis.com/oauth2/v3/userinfo',
+//         scope: ['profile', 'email',
+//         //  'https://www.googleapis.com/auth/user.phonenumbers.read', 
+//         // 'https://www.googleapis.com/auth/user.addresses.read'
+//     ],
+//         passReqToCallback: true
+//     },
+//         async (req, res, accessToken, refreshToken, profile, done) => {
 
 
-        }
-    )
-    )
-   try {
-    passport.serializeUser(function (user, done) {
-        done(null, user.id);
-    });
+//             // console.log(profile);
+//             const existingUser = await User.findOne({
+//                 googleId: profile.id,
+//             })
 
-    passport.deserializeUser(async (user, id, done) => {
-        const newUser = await User.findById(id)
-        done(null, newUser.id);
-    })
-   } catch (error) {
-     console.error(error.message);
-   }
-}
+//             if (existingUser) {
+//                 // User already exists, return the user
+
+//                 done(null, existingUser);
+//             } else {
+
+//                 // Create a new user
+//                 const user = await User.create({
+//                     googleId: profile.id,
+//                     name: profile.displayName,
+//                     email: profile.emails[0].value,
+//                     secret: accessToken,
+//                     number: profile.phone_number,
+//                     address: profile.address,
+//                 });
+
+//                 console.log(user)
+//                 done(null, user,);
+
+//             }
+
+
+//         }
+//     )
+//     )
+//    try {
+//     passport.serializeUser(function (user, done) {
+//         done(null, user.id);
+//     });
+
+//     passport.deserializeUser(async (user, id, done) => {
+//         const newUser = await User.findById(id)
+//         done(null, newUser.id);
+//     })
+//    } catch (error) {
+//      console.error(error.message);
+//    }
+// }
 
 export const registerUser = async(req,res) =>{
     try {
@@ -115,6 +117,8 @@ export const registerUser = async(req,res) =>{
 
 
 export const loginUser = async(req,res) =>{
+
+
     try {
         const {email,password} = req.body;
 
@@ -135,7 +139,7 @@ export const loginUser = async(req,res) =>{
              } else{
                 const token = await user.generateToken();
                 return res.status(200)
-                .cookie("token", token, { expires: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000), httpOnly: true })
+                .cookie("token", token, { expires: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000 ), httpOnly: true })
                 .json({
                     success: true,
                     message:"login succesfully",
@@ -196,10 +200,95 @@ export const updatePassword = async (req,res) =>{
     }
 }
 
+export const forgotPassword = async(req,res) =>{
+    try {
+        const user = await User.findOne({email:req.body.email})
+
+        if(!user){
+            return res.status(404).json({
+                success: false,
+                message: 'User not found'
+            })
+        }
+
+        const resetPasswordToken = await user.getResetPasswordToken();
+
+        await user.save();
+
+        // const resetUrl = `${req.protocol}://${req.get("host")}/api/v1/password/reset/${resetPasswordToken}`;
+        const resetUrl = `http://localhost:3000/password/reset/${resetPasswordToken}`;
+     
+
+        const message = `Reset  your password by clicking on the link below :\n\n${resetUrl}`
+
+        try {
+            await sendPasswordResetEmail({
+                email:user.email,
+                subject:"Reset Password",
+                message
+            })
+
+            res.status(200).json({
+                success: true,
+                message:`Link sent to this ${user.email}`
+            })
+        } catch (error) {
+            user.resetPasswordToken = undefined;
+            user.resetPasswordExpires = undefined;
+            await user.save();
+            res.status(500).json({
+                    success: false,
+                    message: error.message
+                })
+        }
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        })
+    }
+}
+
+export const resetPassword = async (req,res)=>{
+    try {
+        // const resetPasswordToken =  crypto.createHash("sha256").update(req.params.token).digest("hex");
+        const resetPasswordToken = req.params.token;
+
+        const user = await User.findOne({
+            resetPasswordToken
+           
+        })
+        // console.log(user)
+       
+        if(!user){
+            return res.status(401).json({
+                success: false,
+                message:"Token is invalid or has expired"
+            })
+        }
+
+        user.password = req.body.newPassword;
+        user.resetPasswordToken = resetPasswordToken;
+        // user.resetPasswordExpires = undefined;
+        await user.save();
+
+        res.status(200).json({
+            success:true,
+            message:"password updated"
+        })
+    } catch (error) {
+        console.log(error.message);
+        res.status(500).json({
+            success: false,
+            message:error.message
+        })
+    }
+}
+
 export const updateProfile = async(req,res) =>{
     try {
-        const user =  await User.findById(req.user._id);
-        const {name,number,email} = req.body;
+        const user =  await User.findById(req.params.id);
+        const {name,number,email,address} = req.body;
         if(name){
             user.name = name;
         }
@@ -208,6 +297,9 @@ export const updateProfile = async(req,res) =>{
         }
         if(email){
             user.email = email;
+        }
+        if(address){
+            user.address = address;
         }
         await user.save();
         res.status(200).json({
