@@ -140,7 +140,6 @@ export const loginUser = async(req,res) =>{
              } else{
                 const token = await user.generateToken();
                 return res.status(200)
-                .cookie("token", token, { expires: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000 ), httpOnly: true })
                 .json({
                     success: true,
                     message:"login succesfully",
