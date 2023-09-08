@@ -6,7 +6,7 @@ import cookie from "cookie-parser"
 import cloudinary from "cloudinary";
 import passport from "passport";
 
-import fileUpload from "express-fileupload";
+// import fileUpload from "express-fileupload";
 
 
 // Routers

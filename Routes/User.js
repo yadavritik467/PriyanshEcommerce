@@ -1,8 +1,7 @@
 import express from "express";
 
 import { deleteUser, forgotPassword, getAllUsers, loginUser, registerUser, resetPassword, updateProfile } from "../Controller/User.js";
-import jwt from "jsonwebtoken";
-import passport from "passport";
+
  
 
 

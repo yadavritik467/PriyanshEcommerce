@@ -167,6 +167,7 @@ export const loginUser = async(req,res) =>{
                 })
              } else{
                 const token = await user.generateToken();
+                // console.log(user)
                 return res.status(200)
                 .json({
                     success: true,
