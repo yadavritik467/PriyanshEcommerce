@@ -4,7 +4,7 @@ import {config} from "dotenv"
 import mongoose from "mongoose";
 import cookie from "cookie-parser"
 import cloudinary from "cloudinary";
-
+import passport from "passport";
 
 import fileUpload from "express-fileupload";
 
@@ -18,6 +18,7 @@ import ContentRouter_2 from "./Routes/Content_2.js"
 import CaroRouter from "./Routes/Carousel.js"
 
 import OrderRouter from "./Routes/Order.js"
+import { connectPassport } from "./Controller/User.js";
 
 
 
@@ -25,11 +26,13 @@ import OrderRouter from "./Routes/Order.js"
 
 config({path:"./config/config.env"});
 const app = express();
+app.use(passport.initialize());
 app.use(express.json({limit:"50mb"}));
 app.use(express.urlencoded({limit:"50mb",extended:true}));
 app.use(cookie());
 app.use(cors())
 
+connectPassport();
 
 // app.use('/',express.static('./Frontend/build/'))
 
@@ -73,6 +76,8 @@ app.use("/api/v1",ContentRouter_2)
 app.use("/api/v1",CaroRouter)
 app.use("/api/v1",OrderRouter)
 // app.use("/auth",UserRouter)
+
+
 
 app.get("/",(req,res)=>{
     res.send("working");

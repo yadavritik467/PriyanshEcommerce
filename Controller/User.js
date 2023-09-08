@@ -1,67 +1,95 @@
-// import passport from "passport";
 import { User } from "../Model/User.js";
-import crypto from "crypto"
-// import { Strategy as GoogleStrategy } from 'passport-google-oauth20'
+import passport from "passport";
+import { OAuth2Strategy as GoogleStrategy } from "passport-google-oauth";
 import { sendPasswordResetEmail } from "../utils/sendPassword.js";
 
-// export const connectPassport = (res) => {
-//     passport.use(new GoogleStrategy({
-//         clientID: process.env.CLIENT_ID,
-//         clientSecret: process.env.CLIENT_SECRET,
-//         callbackURL: "http://localhost:4500/auth/google/callback",
-//         userProfileURL: 'https://www.googleapis.com/oauth2/v3/userinfo',
-//         scope: ['profile', 'email',
-//         //  'https://www.googleapis.com/auth/user.phonenumbers.read', 
-//         // 'https://www.googleapis.com/auth/user.addresses.read'
-//     ],
-//         passReqToCallback: true
-//     },
-//         async (req, res, accessToken, refreshToken, profile, done) => {
-
-
-//             // console.log(profile);
-//             const existingUser = await User.findOne({
-//                 googleId: profile.id,
-//             })
-
-//             if (existingUser) {
-//                 // User already exists, return the user
-
-//                 done(null, existingUser);
-//             } else {
-
-//                 // Create a new user
-//                 const user = await User.create({
-//                     googleId: profile.id,
-//                     name: profile.displayName,
-//                     email: profile.emails[0].value,
-//                     secret: accessToken,
-//                     number: profile.phone_number,
-//                     address: profile.address,
-//                 });
-
-//                 console.log(user)
-//                 done(null, user,);
-
-//             }
-
-
-//         }
-//     )
-//     )
-//    try {
-//     passport.serializeUser(function (user, done) {
-//         done(null, user.id);
-//     });
-
-//     passport.deserializeUser(async (user, id, done) => {
-//         const newUser = await User.findById(id)
-//         done(null, newUser.id);
-//     })
-//    } catch (error) {
-//      console.error(error.message);
-//    }
+// export const connectPassport = (req) =>{
+//     passport.serializeUser((user, done) => {
+//         done(null, user);
+//       });
+       
+//       passport.deserializeUser((user, done) => {
+//         done(null, user);
+//       });
+       
+//       passport.use(
+//         new GoogleStrategy(
+//           {
+//             clientID: process.env.CLIENT_ID,
+//             clientSecret: process.env.CLIENT_SECRET,
+//             callbackURL: "http://localhost:4500/auth/google/callback",
+//           },
+//           async (accessToken, refreshToken, profile, done) => {
+//             const userData = {
+//               email: profile.emails[0].value,
+//               name: profile.displayName,
+//               token: accessToken,
+//             };
+//             console.log(userData)
+//             done(null, userData);
+//           }
+//         )
+//       );
 // }
+
+export const connectPassport = (res) => {
+    passport.use(new GoogleStrategy({
+        clientID: process.env.CLIENT_ID,
+        clientSecret: process.env.CLIENT_SECRET,
+        callbackURL: "http://localhost:4500/auth/google/callback",
+        userProfileURL: 'https://www.googleapis.com/oauth2/v3/userinfo',
+        scope: ['profile', 'email',
+        //  'https://www.googleapis.com/auth/user.phonenumbers.read', 
+        // 'https://www.googleapis.com/auth/user.addresses.read'
+    ],
+        passReqToCallback: true
+    },
+        async (req, res, accessToken, refreshToken, profile, done) => {
+
+
+            // console.log(profile);
+            const existingUser = await User.findOne({
+                googleId: profile.id,
+            })
+
+            if (existingUser) {
+                // User already exists, return the user
+
+                done(null, existingUser);
+            } else {
+
+                // Create a new user
+                const user = await User.create({
+                    googleId: profile.id,
+                    name: profile.displayName,
+                    email: profile.emails[0].value,
+                    // secrety: accessToken,
+                    // number: profile.phone_number,
+                    address: profile.address,
+                });
+
+                console.log(user)
+                done(null, user,);
+
+            }
+
+
+        }
+    )
+    )
+   try {
+    passport.serializeUser(function (user, done) {
+        done(null, user.id);
+    });
+
+    passport.deserializeUser(async (user, id, done) => {
+        const newUser = await User.findById(id)
+        done(null, newUser.id);
+    })
+   } catch (error) {
+     console.error(error.message);
+   }
+}
 
 
 export const registerUser = async(req,res) =>{

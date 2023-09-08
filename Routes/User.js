@@ -2,6 +2,7 @@ import express from "express";
 
 import { deleteUser, forgotPassword, getAllUsers, loginUser, registerUser, resetPassword, updateProfile } from "../Controller/User.js";
 import jwt from "jsonwebtoken";
+import passport from "passport";
  
 
 
@@ -18,6 +19,19 @@ router.put("/users/:id",updateProfile)
 router.delete("/users/:id",deleteUser)
 
 router.get("/allUsers",getAllUsers )
+
+// router.get(
+//     "/auth/google",
+//     passport.authenticate("google", { scope: ["profile", "email"] })
+// );
+// router.get(
+//     "/auth/google/callback",
+//     passport.authenticate("google", { failureRedirect: "/", session: false }),
+//     function(req, res) {
+//         var token = req.user.token;
+//         res.redirect("http://localhost:3000?token=" + token);
+//     }
+// );
 
 
 export default router;
